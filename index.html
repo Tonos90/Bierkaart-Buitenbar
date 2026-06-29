@@ -14,34 +14,57 @@
       color: #000;
     }
 
-    header span {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 1.4em;
-      font-weight: bold;
-    }
-
     header {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: #ffffff;
-      padding: 14px 16px;
-      border-bottom: 1px solid #ddd;
-      display: flex;
-      white-space: nowrap;
-      align-items: center;
-      justify-content: flex-end;
-    }
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: #fff;
+  border-bottom: 1px solid #ddd;
 
-    #toggleAll {
-      font-size: 1.2em;
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 6px 10px;
-    }
+  display: grid;
+  grid-template-columns: 60px 1fr 60px;
+  align-items: center;
+
+  padding: 12px 16px;
+}
+
+header span {
+  grid-column: 2;
+  text-align: center;
+  font-size: 1.4em;
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#toggleAll {
+  grid-column: 3;
+  justify-self: end;
+
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.2;
+  width: 60px;
+}
+
+#toggleAll .arrow {
+  font-size: 1.3em;
+}
+
+#toggleAll .text {
+  font-size: 0.65em;
+  text-transform: uppercase;
+  font-weight: bold;
+  color: #555;
+  margin-top: 2px;
+}
 
     .container {
       padding: 10px;
@@ -113,25 +136,24 @@
       flex-shrink: 0;
       min-width: 70px;
       text-align: right;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
     }
 
     .info-link {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 18px;
-      height: 18px;
-      margin-left: 6px;
-      border-radius: 50%;
-      background: #1e88e5;
-      color: #fff;
-      font-size: 12px;
-      font-weight: bold;
+      margin-left: 8px;
+      color: #1e88e5;
+      font-size: 1.1em;
       text-decoration: none;
+      font-weight: bold;
     }
 
     .info-link:hover {
-      background: #1565c0;
+      color: #1565c0;
     }
     
     .fade-out {
@@ -152,7 +174,10 @@
 
 <header>
   <span>🍺 Bierkaart Buitenbar</span>
-  <button id="toggleAll" aria-label="Alles open/dicht">⬇︎</button>
+  <button id="toggleAll" aria-label="Alles open/dicht">
+    <span class="arrow">⬇︎</span>
+    <span class="text">Open All</span>
+  </button>
 </header>
 
 <div class="container" id="bierkaart">Laden…</div>
@@ -172,8 +197,7 @@ fetch(SHEET_URL)
     startAutoRefresh();
   })
   .catch(err => {
-    document.getElementById("bierkaart").innerHTML =
-      "Fout bij laden van bierkaart.";
+    document.getElementById("bierkaart").innerHTML = "Fout bij laden van bierkaart.";
     console.error(err);
   });
 
@@ -185,7 +209,6 @@ function getMode() {
 function updateView() {
   const mode = getMode();
 
-  // alleen opnieuw renderen als mode verandert
   if (mode === lastMode) return;
 
   lastMode = mode;
@@ -203,14 +226,10 @@ function updateView() {
 
 function startAutoRefresh() {
   const now = new Date();
-
-  // bereken ms tot volgende minuut
   const msToNextMinute = (60 - now.getSeconds()) * 1000;
 
   setTimeout(() => {
-    updateView(); // eerste check precies op minuutgrens
-
-    // daarna elke minuut netjes op de minuut
+    updateView(); 
     setInterval(updateView, 60000);
   }, msToNextMinute);
 }
@@ -264,7 +283,6 @@ function parseCSV(text) {
 function render(bieren) {
   const container = document.getElementById("bierkaart");
 
-  // fade out
   container.classList.remove("fade-in");
   container.classList.add("fade-out");
 
@@ -292,6 +310,7 @@ function render(bieren) {
       grouped[style].forEach(b => {
         const beer = document.createElement("div");
         beer.className = "beer";
+        
         beer.innerHTML = `
           <div class="beer-info">
             <span class="beer-name">${b.naam}</span>
@@ -299,7 +318,7 @@ function render(bieren) {
           </div>
           <div class="price">
             ${b.prijs}
-            ${b.info ? `<a href="${b.info}" target="_blank" class="info-link">i</a>` : ""}
+            ${b.info ? `<a href="${b.info}" target="_blank" class="info-link" title="Meer info">↗</a>` : ""}
           </div>
         `;
         list.appendChild(beer);
@@ -310,11 +329,10 @@ function render(bieren) {
       container.appendChild(block);
     });
 
-    // fade in
     container.classList.remove("fade-out");
     container.classList.add("fade-in");
 
-  }, 300); // moet gelijk zijn aan CSS transition
+  }, 300);
 }
 
 let allesOpen = false;
@@ -326,7 +344,9 @@ document.getElementById("toggleAll").addEventListener("click", () => {
     style.classList.toggle("open", allesOpen);
   });
 
-  document.getElementById("toggleAll").textContent = allesOpen ? "⬆︎" : "⬇︎";
+  const button = document.getElementById("toggleAll");
+  button.querySelector(".arrow").textContent = allesOpen ? "⬆︎" : "⬇︎";
+  button.querySelector(".text").textContent = allesOpen ? "Close All" : "Open All";
 });
 </script>
 
